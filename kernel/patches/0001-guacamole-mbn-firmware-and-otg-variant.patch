@@ -1,0 +1,38 @@
+diff '--color=auto' -urN a/arch/arm64/boot/dts/qcom/Makefile b/arch/arm64/boot/dts/qcom/Makefile
+--- a/arch/arm64/boot/dts/qcom/Makefile	2026-09-26 22:56:47.002714533 +1000
++++ b/arch/arm64/boot/dts/qcom/Makefile	2026-09-26 22:56:47.005019235 +1000
+@@ -278,6 +278,7 @@
+ dtb-$(CONFIG_ARCH_QCOM)	+= sm8150-xiaomi-nabu.dtb
+ dtb-$(CONFIG_ARCH_QCOM)	+= sm8250-hdk.dtb
+ dtb-$(CONFIG_ARCH_QCOM)	+= sm8150-oneplus-guacamole.dtb
++dtb-$(CONFIG_ARCH_QCOM)	+= sm8150-oneplus-guacamole-otg.dtb
+ dtb-$(CONFIG_ARCH_QCOM)	+= sm8150-oneplus-hotdogb.dtb
+ dtb-$(CONFIG_ARCH_QCOM)	+= sm8250-mtp.dtb
+ dtb-$(CONFIG_ARCH_QCOM)	+= sm8250-sony-xperia-edo-pdx203.dtb
+diff '--color=auto' -urN a/arch/arm64/boot/dts/qcom/sm8150-oneplus-common.dtsi b/arch/arm64/boot/dts/qcom/sm8150-oneplus-common.dtsi
+--- a/arch/arm64/boot/dts/qcom/sm8150-oneplus-common.dtsi	2026-09-26 22:56:47.000973411 +1000
++++ b/arch/arm64/boot/dts/qcom/sm8150-oneplus-common.dtsi	2026-09-26 22:56:47.004307108 +1000
+@@ -449,7 +449,7 @@
+ 
+ &remoteproc_mpss {
+ 	status = "okay";
+-	firmware-name = "qcom/sm8150/oneplus7/modem.mdt";
++	firmware-name = "qcom/sm8150/oneplus7/modem.mbn";
+ };
+ 
+ // Some of these might be guacamole specific
+diff '--color=auto' -urN a/arch/arm64/boot/dts/qcom/sm8150-oneplus-guacamole-otg.dts b/arch/arm64/boot/dts/qcom/sm8150-oneplus-guacamole-otg.dts
+--- a/arch/arm64/boot/dts/qcom/sm8150-oneplus-guacamole-otg.dts	1970-01-01 10:00:00.000000000 +1000
++++ b/arch/arm64/boot/dts/qcom/sm8150-oneplus-guacamole-otg.dts	2026-09-26 22:56:47.048019238 +1000
+@@ -0,0 +1,11 @@
++// SPDX-License-Identifier: BSD-3-Clause
++/*
++ * OnePlus 7 Pro with the USB port forced to host mode, for OTG adapters
++ * (e.g. external WiFi cards). USB gadget networking is unavailable.
++ */
++
++#include "sm8150-oneplus-guacamole.dts"
++
++&usb_1_dwc3 {
++	dr_mode = "host";
++};
