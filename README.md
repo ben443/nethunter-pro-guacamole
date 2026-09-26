@@ -130,7 +130,7 @@ Requirements: a Linux x86_64 host with `git`, `curl`, `patch`, `img2simg`
 (the image build runs in a VM via debos/fakemachine).
 
 ```sh
-git clone https://github.com/<you>/nethunter-pro-guacamole
+git clone https://github.com/haintrainn/nethunter-pro-guacamole
 cd nethunter-pro-guacamole
 ./build.sh
 ```
