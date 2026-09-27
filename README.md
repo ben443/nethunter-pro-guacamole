@@ -103,6 +103,13 @@ Download the images from the [latest release](../../releases/latest), or
    phone's own partitions and **reboots once by itself**. No proprietary
    firmware is distributed with these images.
 5. Log in with user **`kali`**, password **`1234`**. Change it: `passwd`.
+6. **v0.1 only:** turn on boot marking, or after about 7 boots the bootloader
+   gives up on the slot and shows *"The current image (boot/recovery) have
+   been destroyed"* (see [Recovery](#recovery)):
+
+   ```sh
+   sudo systemctl enable --now qbootctl
+   ```
 
 ### SSH over USB
 
@@ -128,7 +135,18 @@ Flash the normal boot image again to get USB networking back.
 ### Recovery
 
 * The phone can always be put into fastboot mode with **Power + Volume Up**.
-* If Kali fails to boot several times, the bootloader marks the slot
+* **"The current image (boot/recovery) have been destroyed and can not
+  boot"**: the bootloader gives each slot 7 tries and only resets the count
+  when Linux marks the boot successful (`qbootctl.service`, not enabled in
+  v0.1). Nothing is actually destroyed. Go to fastboot mode, re-arm the slot
+  and boot, then enable the service (step 6 of [Install](#install)):
+
+  ```sh
+  fastboot getvar current-slot     # e.g. "current-slot: b"
+  fastboot set_active b            # the slot from above
+  fastboot reboot
+  ```
+* If Kali really fails to boot several times, the bootloader marks the slot
   unbootable and switches slots. Fix with
   `fastboot set_active a` (or `b`) after re-flashing.
 * Do **not** run `reboot bootloader` from Linux: on this device it lands in
@@ -197,6 +215,10 @@ adapters. `kernel/pmos/` holds postmarketOS' kernel config and patches.
 * Bluetooth, audio, camera, sensors and fingerprint are not enabled.
 * 5 GHz Wi-Fi connections are untested.
 * The USB port doesn't switch between device and host mode automatically.
+* The phone sometimes resets on its own (black screen; USB shows Qualcomm
+  `05c6:900e` crash-dump mode) after it has been idle for a while. Being
+  investigated. Hold Power + Volume Up for ~15 s to get out, then boot from
+  fastboot with `fastboot reboot`.
 
 Contributions welcome.
 

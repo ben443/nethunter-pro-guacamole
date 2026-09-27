@@ -122,10 +122,10 @@ index bc29165..7496090 100755
  # flash one partition at a time using fastboot.
  
 diff --git a/devices/qcom/packages-base.yaml b/devices/qcom/packages-base.yaml
-index 6eeb70e..2ef7dcf 100644
+index 6eeb70e..6188412 100644
 --- a/devices/qcom/packages-base.yaml
 +++ b/devices/qcom/packages-base.yaml
-@@ -40,6 +40,11 @@ actions:
+@@ -40,6 +40,16 @@ actions:
      description: Add droid-juicer configuration to image
      source: droid-juicer
      destination: /usr/share/droid-juicer/configs
@@ -134,6 +134,11 @@ index 6eeb70e..2ef7dcf 100644
 +    description: Enable USB networking (SSH over USB)
 +    chroot: true
 +    command: systemctl enable mobile-usb-gadget.service mobile-usb-network-setup.service
++
++  - action: run
++    description: Mark each successful boot, or the bootloader retires the slot
++    chroot: true
++    command: systemctl enable qbootctl.service
  {{- end }}
  
    - action: run
