@@ -1,0 +1,83 @@
+--- a/src/render.c
++++ b/src/render.c
+@@ -27,6 +27,7 @@
+ #include "xwayland-surface.h"
+ 
+ #include <wlr/backend.h>
++#include <wlr/backend/headless.h>
+ #include <wlr/config.h>
+ #include <wlr/render/drm_format_set.h>
+ #include <wlr/render/wlr_renderer.h>
+@@ -78,6 +79,10 @@
+   struct wlr_renderer  *wlr_renderer;
+   struct wlr_allocator *wlr_allocator;
+ 
++  /* Allocator for offscreen buffers (e.g. thumbnails) on the renderer's device */
++  struct wlr_backend   *offscreen_backend;
++  struct wlr_allocator *offscreen_allocator;
++
+   struct wl_listener    renderer_lost;
+   guint renderer_recreate_id;
+ 
+@@ -140,11 +145,43 @@
+   wl_list_for_each (output, &desktop->outputs, link)
+     wlr_output_init_render (output->wlr_output, self->wlr_allocator, self->wlr_renderer);
+ 
++  g_clear_pointer (&self->offscreen_allocator, wlr_allocator_destroy);
+   wlr_allocator_destroy (old_wlr_allocator);
+   wlr_renderer_destroy (old_wlr_renderer);
+ }
+ 
+ 
++/*
++ * The output allocator lives on the backend's DRM device. When that is a
++ * display-only device (e.g. simpledrm) and rendering happens on a separate
++ * render node, it fails to allocate many offscreen buffer sizes (EINVAL),
++ * breaking thumbnails. A backend without a DRM device (headless, never
++ * started) makes wlr_allocator_autocreate() use the renderer's device.
++ */
++static struct wlr_allocator *
++get_offscreen_allocator (PhocRenderer *self)
++{
++  if (self->offscreen_allocator)
++    return self->offscreen_allocator;
++
++  if (!self->offscreen_backend) {
++    struct wl_display *wl_display = phoc_server_get_wl_display (phoc_server_get_default ());
++
++    self->offscreen_backend = wlr_headless_backend_create (wl_display_get_event_loop (wl_display));
++    if (!self->offscreen_backend)
++      return self->wlr_allocator;
++  }
++
++  self->offscreen_allocator = wlr_allocator_autocreate (self->offscreen_backend, self->wlr_renderer);
++  if (!self->offscreen_allocator) {
++    g_warning ("Failed to create offscreen allocator, using the output allocator");
++    return self->wlr_allocator;
++  }
++
++  return self->offscreen_allocator;
++}
++
++
+ static void
+ handle_renderer_lost (struct wl_listener *listener, void *data)
+ {
+@@ -462,7 +499,7 @@
+   wlr_drm_format_set_add (&fmt_set, DRM_FORMAT_ARGB8888, DRM_FORMAT_MOD_LINEAR);
+   fmt = wlr_drm_format_set_get (&fmt_set, DRM_FORMAT_ARGB8888);
+ 
+-  buffer = wlr_allocator_create_buffer (self->wlr_allocator, width, height, fmt);
++  buffer = wlr_allocator_create_buffer (get_offscreen_allocator (self), width, height, fmt);
+   if (!buffer) {
+     wlr_drm_format_set_finish (&fmt_set);
+     g_warning ("Failed to allocate buffer");
+@@ -678,6 +715,8 @@
+ 
+   g_clear_handle_id (&self->renderer_recreate_id, g_source_remove);
+ 
++  g_clear_pointer (&self->offscreen_allocator, wlr_allocator_destroy);
++  g_clear_pointer (&self->offscreen_backend, wlr_backend_destroy);
+   g_clear_pointer (&self->wlr_allocator, wlr_allocator_destroy);
+   g_clear_pointer (&self->wlr_renderer, wlr_renderer_destroy);
+ 

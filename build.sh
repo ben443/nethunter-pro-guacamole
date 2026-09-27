@@ -28,11 +28,15 @@ fi
 "$HERE/kernel/build-kernel.sh"
 cp -f "$HERE"/kernel/out/linux-image-6.17.0-sm8150_*_arm64.deb "$NHP/devices/qcom/packages/"
 
-# 3. Image (Kali rolling + Phosh)
+# 3. Patched phoc (GPU thumbnails with simpledrm), installed over Kali's
+"$HERE/phoc/build-phoc.sh"
+cp -f "$HERE"/phoc/out/phoc_*_arm64.deb "$NHP/devices/qcom/packages/"
+
+# 4. Image (Kali rolling + Phosh)
 cd "$NHP"
 ./build-in-container.sh -v wip -D phosh "$@"
 
-# 4. fastboot needs an Android sparse image (the build container has no img2simg)
+# 5. fastboot needs an Android sparse image (the build container has no img2simg)
 cd "$NHP/output"
 for img in *.rootfs.img; do
 	img2simg "$img" "${img%.img}.simg" 4096

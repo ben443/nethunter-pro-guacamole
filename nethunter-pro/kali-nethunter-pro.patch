@@ -266,6 +266,16 @@ index 0000000..af21733
 +# crashes: on SM8150 reading it can trip the XPU and force the whole phone into
 +# Qualcomm crash-dump mode, instead of just restarting the remote processor.
 +ACTION=="add", SUBSYSTEM=="remoteproc", ATTR{coredump}="disabled"
+diff --git a/devices/qcom/phosh-wip/etc/udev/rules.d/61-guacamole-gpu-always-on.rules b/devices/qcom/phosh-wip/etc/udev/rules.d/61-guacamole-gpu-always-on.rules
+new file mode 100644
+index 0000000..5faaa38
+--- /dev/null
++++ b/devices/qcom/phosh-wip/etc/udev/rules.d/61-guacamole-gpu-always-on.rules
+@@ -0,0 +1,4 @@
++# Keep the Adreno 640 powered while its driver is bound: letting it
++# runtime-suspend (GMU power collapse, 66 ms autosuspend) is suspected of
++# resetting the SoC into Qualcomm crash-dump mode.
++ACTION=="add|bind", SUBSYSTEM=="platform", KERNEL=="2c00000.gpu", ATTR{power/control}="on"
 diff --git a/devices/qcom/phosh-wip/usr/libexec/guacamole/phosh-renderer b/devices/qcom/phosh-wip/usr/libexec/guacamole/phosh-renderer
 new file mode 100755
 index 0000000..89c986e
@@ -287,21 +297,17 @@ index 0000000..89c986e
 +fi
 diff --git a/devices/qcom/phosh-wip/usr/share/glib-2.0/schemas/90_guacamole.gschema.override b/devices/qcom/phosh-wip/usr/share/glib-2.0/schemas/90_guacamole.gschema.override
 new file mode 100644
-index 0000000..e091f98
+index 0000000..27fde1a
 --- /dev/null
 +++ b/devices/qcom/phosh-wip/usr/share/glib-2.0/schemas/90_guacamole.gschema.override
-@@ -0,0 +1,8 @@
-+# Software rendering only (no GPU driver yet): skip animations
-+[org.gnome.desktop.interface]
-+enable-animations=false
-+
+@@ -0,0 +1,4 @@
 +# Kali rolling updates are large and frequent: don't download them in the
 +# background on a phone, let the user start them from Software
 +[org.gnome.software]
 +download-updates=false
 diff --git a/devices/qcom/phosh-wip/usr/share/gmobile-guacamole/oneplus,guacamole.json b/devices/qcom/phosh-wip/usr/share/gmobile-guacamole/oneplus,guacamole.json
 new file mode 100644
-index 0000000..2f36818
+index 0000000..957314e
 --- /dev/null
 +++ b/devices/qcom/phosh-wip/usr/share/gmobile-guacamole/oneplus,guacamole.json
 @@ -0,0 +1,8 @@
@@ -309,7 +315,7 @@ index 0000000..2f36818
 +  "name": "OnePlus 7 Pro",
 +  "x-res": 1440,
 +  "y-res": 3120,
-+  "border-radius": 150,
++  "border-radius": 200,
 +  "width": 71,
 +  "height": 154
 +}

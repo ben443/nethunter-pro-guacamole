@@ -175,8 +175,11 @@ cd nethunter-pro-guacamole
 2. builds the kernel packages with `kernel/build-kernel.sh` (downloads and
    verifies the sm8150-mainline v6.17.0 tarball, applies postmarketOS' and
    this project's patches, builds with LLVM in a Kali container);
-3. builds the image (`build-in-container.sh -v wip -D phosh`);
-4. converts the rootfs to an Android sparse image for fastboot.
+3. builds Kali's phoc with this port's patch (`phoc/build-phoc.sh`,
+   cross-compiled for arm64 in a Kali container) so it is installed over
+   the stock package;
+4. builds the image (`build-in-container.sh -v wip -D phosh`);
+5. converts the rootfs to an Android sparse image for fastboot.
 
 Output lands in `kali-nethunter-pro/output/`. The first build takes about an
 hour (most of it is installing packages under arm64 emulation).
@@ -200,6 +203,15 @@ hour (most of it is installing packages under arm64 emulation).
 `Image.gz` for the Android bootloader, and enables common USB Wi-Fi/serial
 adapters. `kernel/pmos/` holds postmarketOS' kernel config and patches.
 
+### phoc (`phoc/patches/`)
+
+| Patch | What and why |
+| --- | --- |
+| `0001` | Allocate offscreen buffers (the app thumbnails in Phosh's overview) on the renderer's device. phoc's allocator lives on the display device, simpledrm, whose Mesa backend rejects many thumbnail sizes (`gbm_bo_create failed: Invalid argument`). With GPU rendering, thumbnails failed and app cards in the overview couldn't be swiped away |
+
+The package is versioned `0.57.0-1+guacamole1`; a newer phoc from Kali
+replaces it (and brings the bug back) until the fix is upstream.
+
 ### Image (`nethunter-pro/kali-nethunter-pro.patch`)
 
 * `wip` device config for guacamole (boot image offsets, OTG variant, kernel
@@ -212,7 +224,9 @@ adapters. `kernel/pmos/` holds postmarketOS' kernel config and patches.
 * GPU: load `msm` at boot (it has no module alias for a GPU without MDSS)
   with `separate_gpu_kms=1`, and pick phoc's renderer when Phosh starts:
   GLES on the Adreno render node, or pixman/cairo if it isn't there.
-* Phosh tuning for the framebuffer: output scale 3, no animations.
+  Keep the GPU powered while its driver is bound (udev rule): letting it
+  runtime-suspend is suspected of resetting the phone.
+* Phosh tuning for the framebuffer: output scale 3.
 * Don't dump remote processor memory when the modem crashes (reading it can
   force the whole phone into Qualcomm crash-dump mode); just restart it.
 * Display panel description (rounded corners) for phosh, which has none for
@@ -230,6 +244,10 @@ adapters. `kernel/pmos/` holds postmarketOS' kernel config and patches.
 * v0.1 resets into Qualcomm crash-dump mode (`05c6:900e`) under memory
   pressure (e.g. `apt install`); fixed by patch `0008`. Hold Power + Volume Up
   for ~15 s to get out.
+* With the GPU allowed to runtime-suspend, the phone reset into crash-dump
+  mode a few minutes after Phosh switched to GPU rendering. The GPU is now
+  kept powered while its driver is loaded; stability of this is still being
+  tested.
 
 Contributions welcome.
 
