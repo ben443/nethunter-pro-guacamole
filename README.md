@@ -76,22 +76,32 @@ Download the images from the [latest release](../../releases/latest), or
 
 1. Reboot the phone into **fastboot mode**: power off, then hold
    **Power + Volume Up**.
-2. Flash (all commands act on the **active slot**):
+2. Check the downloads and unpack the rootfs (it needs ~5.4 GB):
 
    ```sh
-   fastboot flash boot kali-nethunterpro-*.boot-guacamole.img
+   sha256sum -c SHA256SUMS
+   xz -d nethunter-pro-guacamole-*.rootfs.simg.xz
+   ```
+
+3. Flash (all commands act on the **active slot**):
+
+   ```sh
+   fastboot flash boot nethunter-pro-guacamole-*.boot.img
    fastboot erase dtbo
-   fastboot flash userdata kali-nethunterpro-*.rootfs.simg
+   fastboot flash userdata nethunter-pro-guacamole-*.rootfs.simg
    fastboot reboot
    ```
+
+   (Self-built images are named `kali-nethunterpro-*.boot-guacamole.img` and
+   `kali-nethunterpro-*.rootfs.simg`.)
 
    `fastboot erase dtbo` is **required**: the bootloader would otherwise apply
    Android's device-tree overlays to the mainline kernel and it would crash
    instantly. Flashing `userdata` erases Android's data.
-3. The first boot extracts the device's firmware (modem, Wi-Fi, DSPs) from the
+4. The first boot extracts the device's firmware (modem, Wi-Fi, DSPs) from the
    phone's own partitions and **reboots once by itself**. No proprietary
    firmware is distributed with these images.
-4. Log in with user **`kali`**, password **`1234`**. Change it: `passwd`.
+5. Log in with user **`kali`**, password **`1234`**. Change it: `passwd`.
 
 ### SSH over USB
 
@@ -109,7 +119,7 @@ The USB controller can't switch roles automatically yet. To use USB host
 mode, flash the OTG boot image instead (this disables USB networking):
 
 ```sh
-fastboot flash boot kali-nethunterpro-*.boot-guacamole-otg.img
+fastboot flash boot nethunter-pro-guacamole-*.boot-otg.img
 ```
 
 Flash the normal boot image again to get USB networking back.
