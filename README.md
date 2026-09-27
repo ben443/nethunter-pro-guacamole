@@ -29,9 +29,11 @@ Developed and tested on a GM1911 (India).
 | Bluetooth, audio, camera, GPU, sensors, fingerprint | Not working | |
 
 Performance: without a GPU driver the CPU draws every frame of a 1440×3120
-panel. The image uses pixman/cairo software renderers, disables animations,
-and runs the CPU governor at `performance`, which makes it usable but not
-smooth, and costs battery.
+panel. The image uses pixman/cairo software renderers and disables
+animations, which makes it usable but not smooth. (v0.1 also pinned the CPU
+at full speed; that drained the battery faster than a PC's USB port can
+charge it, so it was dropped. To remove it on v0.1:
+`sudo systemctl disable --now cpu-performance`.)
 
 ## Before you start
 
@@ -203,7 +205,7 @@ adapters. `kernel/pmos/` holds postmarketOS' kernel config and patches.
   metadata, so Kali packages only show up as updates; install them with
   `apt`). Updates are not downloaded in the background.
 * Phosh tuning for the framebuffer: output scale 3, pixman/cairo renderers,
-  no animations, CPU `performance` governor.
+  no animations.
 * Display panel description (rounded corners) for phosh, which has none for
   guacamole, loaded through `G_RESOURCE_OVERLAYS` so the status bar icons
   aren't cut off by the screen corners.

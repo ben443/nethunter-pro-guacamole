@@ -226,30 +226,6 @@ index 0000000..4ab4d3e
 +# the size it was tuned for.
 +[output:DSI-1]
 +scale = 3
-diff --git a/devices/qcom/phosh-wip/etc/systemd/system/cpu-performance.service b/devices/qcom/phosh-wip/etc/systemd/system/cpu-performance.service
-new file mode 100644
-index 0000000..d9d641e
---- /dev/null
-+++ b/devices/qcom/phosh-wip/etc/systemd/system/cpu-performance.service
-@@ -0,0 +1,10 @@
-+[Unit]
-+Description=Run all CPU clusters at full speed (software rendering needs it)
-+
-+[Service]
-+Type=oneshot
-+ExecStart=/bin/sh -c 'for g in /sys/devices/system/cpu/cpufreq/policy*/scaling_governor; do echo performance > "$g"; done'
-+RemainAfterExit=yes
-+
-+[Install]
-+WantedBy=multi-user.target
-diff --git a/devices/qcom/phosh-wip/etc/systemd/system/multi-user.target.wants/cpu-performance.service b/devices/qcom/phosh-wip/etc/systemd/system/multi-user.target.wants/cpu-performance.service
-new file mode 120000
-index 0000000..3340b65
---- /dev/null
-+++ b/devices/qcom/phosh-wip/etc/systemd/system/multi-user.target.wants/cpu-performance.service
-@@ -0,0 +1 @@
-+../cpu-performance.service
-\ No newline at end of file
 diff --git a/devices/qcom/phosh-wip/etc/systemd/system/phosh.service.d/10-renderer.conf b/devices/qcom/phosh-wip/etc/systemd/system/phosh.service.d/10-renderer.conf
 new file mode 100644
 index 0000000..911b11c
