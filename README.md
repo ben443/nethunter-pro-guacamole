@@ -19,12 +19,12 @@ Developed and tested on a GM1911 (India).
 | --- | --- | --- |
 | Boot, Kali + Phosh | Works | |
 | Display | Works | Bootloader framebuffer (simpledrm); no display driver for the DSC command-mode panel |
-| GPU (Adreno 640) | Works (after v0.1) | Render-only: Phosh and apps draw on the GPU (Mesa freedreno, OpenGL ES 3.2 / OpenGL 4.6), frames are shown through simpledrm. Falls back to CPU rendering if the GPU doesn't come up |
+| GPU (Adreno 640) | Works (v0.2) | Render-only: Phosh and apps draw on the GPU (Mesa freedreno, OpenGL ES 3.2 / OpenGL 4.6), frames are shown through simpledrm. Falls back to CPU rendering if the GPU doesn't come up |
 | Touchscreen | Works | |
-| Wi-Fi (built-in) | Works | Scanning and connecting on 2.4 GHz; needs the Android 12 firmware |
+| Wi-Fi (built-in) | Works | Scanning and connecting on 2.4 and 5 GHz; needs the Android 12 firmware |
 | Battery level | Works | PM8150B fuel gauge; charges over USB |
 | USB networking + SSH | Works | Phone is `10.66.0.1` |
-| App store (Software + Flathub) | Works | Not in v0.1; build from source or `sudo apt install gnome-software gnome-software-plugin-flatpak` |
+| App store (Software + Flathub) | Works (v0.2) | |
 | USB OTG (host mode) | Separate boot image | Swap boot image to use USB Wi-Fi adapters etc. |
 | Modem firmware | Loads | Calls/SMS/mobile data untested |
 | Bluetooth, audio, camera, sensors, fingerprint | Not working | |
@@ -242,7 +242,6 @@ replaces it (and brings the bug back) until the fix is upstream.
 * No proper display driver (the panel is a DSC command-mode panel), so the
   GPU renders and simpledrm shows the result.
 * Bluetooth, audio, camera, sensors and fingerprint are not enabled.
-* 5 GHz Wi-Fi connections are untested.
 * The USB port doesn't switch between device and host mode automatically.
 * v0.1 extracts firmware from slot a even when booted from slot b: if slot a
   has older firmware, Wi-Fi doesn't connect. Fixed after v0.1.
