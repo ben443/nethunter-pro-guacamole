@@ -180,14 +180,22 @@ index 7f42665..9c6a759 100644
 +    chroot: true
 +    command: glib-compile-schemas /usr/share/glib-2.0/schemas
 +{{- end }}
-diff --git a/devices/qcom/phosh-wip/etc/environment.d/60-guacamole-swrender.conf b/devices/qcom/phosh-wip/etc/environment.d/60-guacamole-swrender.conf
+diff --git a/devices/qcom/phosh-wip/etc/modprobe.d/guacamole-gpu.conf b/devices/qcom/phosh-wip/etc/modprobe.d/guacamole-gpu.conf
 new file mode 100644
-index 0000000..988669d
+index 0000000..8497304
 --- /dev/null
-+++ b/devices/qcom/phosh-wip/etc/environment.d/60-guacamole-swrender.conf
++++ b/devices/qcom/phosh-wip/etc/modprobe.d/guacamole-gpu.conf
 @@ -0,0 +1,2 @@
-+# No GPU driver yet: render GTK4 apps with cairo, not GL on llvmpipe
-+GSK_RENDERER=cairo
++# Adreno 640 without MDSS: register the GPU as its own render-only device
++options msm separate_gpu_kms=1
+diff --git a/devices/qcom/phosh-wip/etc/modules-load.d/guacamole-gpu.conf b/devices/qcom/phosh-wip/etc/modules-load.d/guacamole-gpu.conf
+new file mode 100644
+index 0000000..29de875
+--- /dev/null
++++ b/devices/qcom/phosh-wip/etc/modules-load.d/guacamole-gpu.conf
+@@ -0,0 +1,2 @@
++# Adreno 640 GPU: msm has no module alias for the GPU alone (no MDSS here)
++msm
 diff --git a/devices/qcom/phosh-wip/etc/phosh/phoc.ini b/devices/qcom/phosh-wip/etc/phosh/phoc.ini
 new file mode 100644
 index 0000000..4ab4d3e
@@ -228,13 +236,15 @@ index 0000000..4ab4d3e
 +scale = 3
 diff --git a/devices/qcom/phosh-wip/etc/systemd/system/phosh.service.d/10-renderer.conf b/devices/qcom/phosh-wip/etc/systemd/system/phosh.service.d/10-renderer.conf
 new file mode 100644
-index 0000000..911b11c
+index 0000000..4dd2392
 --- /dev/null
 +++ b/devices/qcom/phosh-wip/etc/systemd/system/phosh.service.d/10-renderer.conf
-@@ -0,0 +1,3 @@
+@@ -0,0 +1,5 @@
 +[Service]
-+# No GPU driver yet: composite with pixman instead of GLES on llvmpipe
-+Environment=WLR_RENDERER=pixman
++# Render with the Adreno 640 when its driver is up, else fall back to pixman
++# (the service runs as the user; "+" lets the script write to /run)
++ExecStartPre=+/usr/libexec/guacamole/phosh-renderer
++EnvironmentFile=-/run/guacamole-phosh-renderer.env
 diff --git a/devices/qcom/phosh-wip/etc/systemd/system/phosh.service.d/20-panel.conf b/devices/qcom/phosh-wip/etc/systemd/system/phosh.service.d/20-panel.conf
 new file mode 100644
 index 0000000..0b41669
@@ -246,6 +256,35 @@ index 0000000..0b41669
 +# only), so phosh doesn't know about the rounded corners and puts the status
 +# icons under them. Overlay our panel description onto gmobile's resource path.
 +Environment=G_RESOURCE_OVERLAYS=/mobi/phosh/gmobile/devices/display-panels/oneplus,guacamole.json=/usr/share/gmobile-guacamole/oneplus,guacamole.json
+diff --git a/devices/qcom/phosh-wip/etc/udev/rules.d/60-remoteproc-no-coredump.rules b/devices/qcom/phosh-wip/etc/udev/rules.d/60-remoteproc-no-coredump.rules
+new file mode 100644
+index 0000000..af21733
+--- /dev/null
++++ b/devices/qcom/phosh-wip/etc/udev/rules.d/60-remoteproc-no-coredump.rules
+@@ -0,0 +1,4 @@
++# Don't dump remote processor memory (e.g. the 160 MiB modem region) when one
++# crashes: on SM8150 reading it can trip the XPU and force the whole phone into
++# Qualcomm crash-dump mode, instead of just restarting the remote processor.
++ACTION=="add", SUBSYSTEM=="remoteproc", ATTR{coredump}="disabled"
+diff --git a/devices/qcom/phosh-wip/usr/libexec/guacamole/phosh-renderer b/devices/qcom/phosh-wip/usr/libexec/guacamole/phosh-renderer
+new file mode 100755
+index 0000000..89c986e
+--- /dev/null
++++ b/devices/qcom/phosh-wip/usr/libexec/guacamole/phosh-renderer
+@@ -0,0 +1,13 @@
++#!/bin/sh
++# Pick the renderer for phoc and the session: the Adreno 640 if its render
++# node shows up within ~10 s, otherwise software (pixman/cairo)
++node=/dev/dri/by-path/platform-2c00000.gpu-render
++out=/run/guacamole-phosh-renderer.env
++udevadm settle --timeout=10 || true
++i=0
++while [ ! -e "$node" ] && [ $i -lt 10 ]; do sleep 1; i=$((i+1)); done
++if [ -e "$node" ]; then
++	printf 'WLR_RENDERER=gles2\nWLR_RENDER_DRM_DEVICE=%s\n' "$(readlink -f "$node")" > "$out"
++else
++	printf 'WLR_RENDERER=pixman\nGSK_RENDERER=cairo\n' > "$out"
++fi
 diff --git a/devices/qcom/phosh-wip/usr/share/glib-2.0/schemas/90_guacamole.gschema.override b/devices/qcom/phosh-wip/usr/share/glib-2.0/schemas/90_guacamole.gschema.override
 new file mode 100644
 index 0000000..e091f98

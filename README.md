@@ -18,7 +18,8 @@ Developed and tested on a GM1911 (India).
 | Feature | Status | Notes |
 | --- | --- | --- |
 | Boot, Kali + Phosh | Works | |
-| Display | Works | Bootloader framebuffer (simpledrm), **no GPU**: everything is software-rendered |
+| Display | Works | Bootloader framebuffer (simpledrm); no display driver for the DSC command-mode panel |
+| GPU (Adreno 640) | Works (after v0.1) | Render-only: Phosh and apps draw on the GPU (Mesa freedreno, OpenGL ES 3.2 / OpenGL 4.6), frames are shown through simpledrm. Falls back to CPU rendering if the GPU doesn't come up |
 | Touchscreen | Works | |
 | Wi-Fi (built-in) | Works | Scanning and connecting on 2.4 GHz; needs the Android 12 firmware |
 | Battery level | Works | PM8150B fuel gauge; charges over USB |
@@ -26,11 +27,12 @@ Developed and tested on a GM1911 (India).
 | App store (Software + Flathub) | Works | Not in v0.1; build from source or `sudo apt install gnome-software gnome-software-plugin-flatpak` |
 | USB OTG (host mode) | Separate boot image | Swap boot image to use USB Wi-Fi adapters etc. |
 | Modem firmware | Loads | Calls/SMS/mobile data untested |
-| Bluetooth, audio, camera, GPU, sensors, fingerprint | Not working | |
+| Bluetooth, audio, camera, sensors, fingerprint | Not working | |
 
-Performance: without a GPU driver the CPU draws every frame of a 1440×3120
-panel. The image uses pixman/cairo software renderers and disables
-animations, which makes it usable but not smooth. (v0.1 also pinned the CPU
+Performance: v0.1 has no GPU driver, so the CPU draws every frame of a
+1440×3120 panel with pixman/cairo software renderers (animations off). Later
+builds render on the Adreno 640 GPU instead and only fall back to software
+rendering if the GPU driver doesn't load. (v0.1 also pinned the CPU
 at full speed; that drained the battery faster than a PC's USB port can
 charge it, so it was dropped. To remove it on v0.1:
 `sudo systemctl disable --now cpu-performance`.)
@@ -190,6 +192,8 @@ hour (most of it is installing packages under arm64 emulation).
 | `0003` | simpledrm: keep the framebuffer's `interconnects` voted so scanout isn't starved |
 | `0004` | ath10k: skip the WMI quiet-mode command on WCN3990 (crashes WLAN.HL.3.x firmware) and force passive 5 GHz scans, after [this linux-wireless series](https://ratatoskr.run/linux-wireless/2026/03/15793732/t) |
 | `0005` | simpledrm: report a DSI connector when the framebuffer has a `panel` node, so phoc/phosh treat the display as the built-in panel (touch mapping, rounded-corner margins in the top bar) |
+| `0006` | guacamole: enable the Adreno 640 GPU and its GMU (zap shader extracted by droid-juicer) and reserve a ramoops region for crash logs |
+| `0007` | msm: don't drop a reference on the *exporter's* GEM object when freeing an imported dma-buf. phoc renders on the GPU into buffers imported from simpledrm; the bad reference drop underflowed simpledrm's refcount and crashed the phone |
 
 `kernel/nethunter.config` switches the display to simpledrm, builds a plain
 `Image.gz` for the Android bootloader, and enables common USB Wi-Fi/serial
@@ -204,8 +208,12 @@ adapters. `kernel/pmos/` holds postmarketOS' kernel config and patches.
 * App store: GNOME Software with Flathub (Kali publishes no AppStream
   metadata, so Kali packages only show up as updates; install them with
   `apt`). Updates are not downloaded in the background.
-* Phosh tuning for the framebuffer: output scale 3, pixman/cairo renderers,
-  no animations.
+* GPU: load `msm` at boot (it has no module alias for a GPU without MDSS)
+  with `separate_gpu_kms=1`, and pick phoc's renderer when Phosh starts:
+  GLES on the Adreno render node, or pixman/cairo if it isn't there.
+* Phosh tuning for the framebuffer: output scale 3, no animations.
+* Don't dump remote processor memory when the modem crashes (reading it can
+  force the whole phone into Qualcomm crash-dump mode); just restart it.
 * Display panel description (rounded corners) for phosh, which has none for
   guacamole, loaded through `G_RESOURCE_OVERLAYS` so the status bar icons
   aren't cut off by the screen corners.
@@ -213,7 +221,8 @@ adapters. `kernel/pmos/` holds postmarketOS' kernel config and patches.
 
 ## Known issues / TODO
 
-* No GPU or proper display driver (the panel is a DSC command-mode panel).
+* No proper display driver (the panel is a DSC command-mode panel), so the
+  GPU renders and simpledrm shows the result.
 * Bluetooth, audio, camera, sensors and fingerprint are not enabled.
 * 5 GHz Wi-Fi connections are untested.
 * The USB port doesn't switch between device and host mode automatically.
