@@ -23,6 +23,7 @@ Developed and tested on a GM1911 (India).
 | Wi-Fi (built-in) | Works | Scanning and connecting on 2.4 GHz; needs the Android 12 firmware |
 | Battery level | Works | PM8150B fuel gauge; charges over USB |
 | USB networking + SSH | Works | Phone is `10.66.0.1` |
+| App store (Software + Flathub) | Works | Not in v0.1; build from source or `sudo apt install gnome-software gnome-software-plugin-flatpak` |
 | USB OTG (host mode) | Separate boot image | Swap boot image to use USB Wi-Fi adapters etc. |
 | Modem firmware | Loads | Calls/SMS/mobile data untested |
 | Bluetooth, audio, camera, GPU, sensors, fingerprint | Not working | |
@@ -180,6 +181,9 @@ adapters. `kernel/pmos/` holds postmarketOS' kernel config and patches.
   command line `clk_ignore_unused pd_ignore_unused`).
 * droid-juicer config to extract firmware on first boot.
 * Enables USB networking; installs Settings, Files, Text Editor, Calculator.
+* App store: GNOME Software with Flathub (Kali publishes no AppStream
+  metadata, so Kali packages only show up as updates; install them with
+  `apt`). Updates are not downloaded in the background.
 * Phosh tuning for the framebuffer: output scale 3, pixman/cairo renderers,
   no animations, CPU `performance` governor.
 * Display panel description (rounded corners) for phosh, which has none for
