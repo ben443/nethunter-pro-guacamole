@@ -1,0 +1,45 @@
+--- a/arch/arm64/boot/dts/qcom/sm8150-oneplus-guacamole.dts
++++ b/arch/arm64/boot/dts/qcom/sm8150-oneplus-guacamole.dts
+@@ -75,6 +75,16 @@
+ 			reg = <0 0x9C000000 0 (1440 * 3120 * 4)>;
+ 		};
+ 
++		/*
++		 * Secure CDSP memory, locked by the firmware (downstream
++		 * cdsp_sec_regions). Touching it is an XPU violation, which
++		 * resets the SoC into crash-dump mode without a kernel log.
++		 */
++		cdsp_sec_mem: memory@a4c00000 {
++			reg = <0x0 0xa4c00000 0x0 0x3c00000>;
++			no-map;
++		};
++
+ 		/* Same location as the downstream OnePlus sm8150 kernels */
+ 		ramoops@a9800000 {
+ 			compatible = "ramoops";
+@@ -98,6 +108,25 @@
+ 	reg = <0x0 0x8dc00000 0x0 0xa000000>;
+ };
+ 
++/*
++ * Memory the firmware owns beyond the mainline sm8150 map, from the downstream
++ * reserved-memory (removed_regions, xbl_aop_mem). Linux handing these pages
++ * out resets the SoC into crash-dump mode once memory fills up (e.g. apt).
++ */
++&tz_mem {
++	reg = <0x0 0x86200000 0x0 0x5500000>;
++};
++
++&xbl_mem {
++	reg = <0x0 0x85d00000 0x0 0x200000>;
++};
++
++/* Guard pages: XPU granularity faults on allocations adjacent to rmtfs */
++&rmtfs_mem {
++	reg = <0x0 0xf2900000 0x0 0x202000>;
++	qcom,use-guard-pages;
++};
++
+ &venus_mem {
+ 	reg = <0x0 0x97c00000 0x0 0x500000>;
+ };

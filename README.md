@@ -194,6 +194,7 @@ hour (most of it is installing packages under arm64 emulation).
 | `0005` | simpledrm: report a DSI connector when the framebuffer has a `panel` node, so phoc/phosh treat the display as the built-in panel (touch mapping, rounded-corner margins in the top bar) |
 | `0006` | guacamole: enable the Adreno 640 GPU and its GMU (zap shader extracted by droid-juicer) and reserve a ramoops region for crash logs |
 | `0007` | msm: don't drop a reference on the *exporter's* GEM object when freeing an imported dma-buf. phoc renders on the GPU into buffers imported from simpledrm; the bad reference drop underflowed simpledrm's refcount and crashed the phone |
+| `0008` | guacamole: reserve all the memory the Android 12 firmware owns (full 85 MiB TrustZone region, XBL/AOP, secure CDSP, rmtfs guard pages), taken from the downstream device tree. Linux handing out those pages is an XPU violation: the phone reset into Qualcomm crash-dump mode with no kernel log once memory filled up — within seconds during `apt install`, at random otherwise |
 
 `kernel/nethunter.config` switches the display to simpledrm, builds a plain
 `Image.gz` for the Android bootloader, and enables common USB Wi-Fi/serial
@@ -226,10 +227,9 @@ adapters. `kernel/pmos/` holds postmarketOS' kernel config and patches.
 * Bluetooth, audio, camera, sensors and fingerprint are not enabled.
 * 5 GHz Wi-Fi connections are untested.
 * The USB port doesn't switch between device and host mode automatically.
-* The phone sometimes resets on its own (black screen; USB shows Qualcomm
-  `05c6:900e` crash-dump mode) after it has been idle for a while. Being
-  investigated. Hold Power + Volume Up for ~15 s to get out, then boot from
-  fastboot with `fastboot reboot`.
+* v0.1 resets into Qualcomm crash-dump mode (`05c6:900e`) under memory
+  pressure (e.g. `apt install`); fixed by patch `0008`. Hold Power + Volume Up
+  for ~15 s to get out.
 
 Contributions welcome.
 
