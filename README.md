@@ -43,9 +43,11 @@ You need:
 
 * A OnePlus 7 Pro with an **unlocked bootloader**.
 * A Linux PC with `fastboot` and `adb` (`android-tools`).
-* **The final Android 12 (OxygenOS 12) firmware on both A/B slots.** The Wi-Fi
-  firmware in older OxygenOS versions refuses to connect with mainline Linux,
-  and the device tree uses the Android 12 memory layout.
+* **The final Android 12 (OxygenOS 12) firmware on the active slot**, the
+  one you flash Kali to. The Wi-Fi firmware in older OxygenOS versions refuses
+  to connect with mainline Linux, and the device tree uses the Android 12
+  memory layout. On first boot, firmware is extracted from the slot the phone
+  booted from.
 
 ### Back up your phone's unique partitions
 
@@ -61,18 +63,17 @@ done
 
 Keep these files private: they contain your IMEI.
 
-### Get the Android 12 firmware onto both slots
+### Get the Android 12 firmware
 
 The easiest way is [LineageOS](https://wiki.lineageos.org/devices/guacamole/),
 which ships the Android 12 firmware:
 
 1. Follow the LineageOS install guide for guacamole (flash its `dtbo`,
    `vbmeta` and `boot`, boot into Lineage Recovery, sideload
-   `copy-partitions`, format data, sideload the LineageOS zip).
-2. **In recovery, choose *Advanced → Reboot to recovery*, then sideload the
-   LineageOS zip a second time.** A/B installs go to the *other* slot, so this
-   puts the Android 12 firmware on both slots.
-3. Optionally boot LineageOS once to check the phone works.
+   `copy-partitions`, format data, sideload the LineageOS zip). The zip
+   installs to the other slot and makes it active, so the active slot now
+   has the Android 12 firmware.
+2. Optionally boot LineageOS once to check the phone works.
 
 ## Install
 
@@ -216,7 +217,9 @@ replaces it (and brings the bug back) until the fix is upstream.
 
 * `wip` device config for guacamole (boot image offsets, OTG variant, kernel
   command line `clk_ignore_unused pd_ignore_unused`).
-* droid-juicer config to extract firmware on first boot.
+* droid-juicer config to extract firmware on first boot, from the slot the
+  phone booted (`qbootctl`). On its own droid-juicer reads unsuffixed
+  partitions from slot a, and this bootloader doesn't tell Linux its slot.
 * Enables USB networking; installs Settings, Files, Text Editor, Calculator.
 * App store: GNOME Software with Flathub (Kali publishes no AppStream
   metadata, so Kali packages only show up as updates; install them with
@@ -241,6 +244,8 @@ replaces it (and brings the bug back) until the fix is upstream.
 * Bluetooth, audio, camera, sensors and fingerprint are not enabled.
 * 5 GHz Wi-Fi connections are untested.
 * The USB port doesn't switch between device and host mode automatically.
+* v0.1 extracts firmware from slot a even when booted from slot b: if slot a
+  has older firmware, Wi-Fi doesn't connect. Fixed after v0.1.
 * v0.1 resets into Qualcomm crash-dump mode (`05c6:900e`) under memory
   pressure (e.g. `apt install`); fixed by patch `0008`. Hold Power + Volume Up
   for ~15 s to get out.

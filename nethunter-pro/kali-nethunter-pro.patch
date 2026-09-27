@@ -73,21 +73,22 @@ index 339cc6e..78a4294 100644
 +model = "guacamole"
 +variant = "otg"
 +append = "clk_ignore_unused pd_ignore_unused console=tty0"
-diff --git a/devices/qcom/droid-juicer/oneplus,guacamole.toml b/devices/qcom/droid-juicer/oneplus,guacamole.toml
+diff --git a/devices/qcom/droid-juicer/oneplus,guacamole_a.toml b/devices/qcom/droid-juicer/oneplus,guacamole_a.toml
 new file mode 100644
-index 0000000..4834ddc
+index 0000000..0062623
 --- /dev/null
-+++ b/devices/qcom/droid-juicer/oneplus,guacamole.toml
-@@ -0,0 +1,28 @@
++++ b/devices/qcom/droid-juicer/oneplus,guacamole_a.toml
+@@ -0,0 +1,29 @@
++# Firmware from slot a: droid-juicer takes unsuffixed partitions from slot a,
++# so /usr/libexec/guacamole/droid-juicer-slot picks the file for the slot the
++# phone booted (the firmware must match that slot's bootloader/TrustZone).
 +[juicer]
 +firmware = [
-+    { partition = "vendor", origin = "firmware", destination = "qcom/sm8150/oneplus7", files = [
++    { partition = "vendor_a", origin = "firmware", destination = "qcom/sm8150/oneplus7", files = [
 +            { name = "a640_zap.mdt" },
 +            { name = "ipa_fws.mdt" },
 +        ] },
-+    # Needs the Android 12 firmware on this slot (see README: sideload
-+    # LineageOS twice so both slots have it)
-+    { partition = "modem", origin = "image", destination = "qcom/sm8150/oneplus7", files = [
++    { partition = "modem_a", origin = "image", destination = "qcom/sm8150/oneplus7", files = [
 +            { name = "adsp.mdt" },
 +            { name = "adspr.jsn" },
 +            { name = "adspua.jsn" },
@@ -102,7 +103,42 @@ index 0000000..4834ddc
 +            { name = "venus.mdt" },
 +            { name = "wlanmdsp.mbn" },
 +        ] },
-+    { partition = "bluetooth", origin = "image", destination = "qca", files = [
++    { partition = "bluetooth_a", origin = "image", destination = "qca", files = [
++            { name = "crbtfw21.tlv" },
++            { name = "crnv21.bin" },
++        ] },
++]
+diff --git a/devices/qcom/droid-juicer/oneplus,guacamole_b.toml b/devices/qcom/droid-juicer/oneplus,guacamole_b.toml
+new file mode 100644
+index 0000000..44be3c9
+--- /dev/null
++++ b/devices/qcom/droid-juicer/oneplus,guacamole_b.toml
+@@ -0,0 +1,29 @@
++# Firmware from slot b: droid-juicer takes unsuffixed partitions from slot a,
++# so /usr/libexec/guacamole/droid-juicer-slot picks the file for the slot the
++# phone booted (the firmware must match that slot's bootloader/TrustZone).
++[juicer]
++firmware = [
++    { partition = "vendor_b", origin = "firmware", destination = "qcom/sm8150/oneplus7", files = [
++            { name = "a640_zap.mdt" },
++            { name = "ipa_fws.mdt" },
++        ] },
++    { partition = "modem_b", origin = "image", destination = "qcom/sm8150/oneplus7", files = [
++            { name = "adsp.mdt" },
++            { name = "adspr.jsn" },
++            { name = "adspua.jsn" },
++            { name = "cdsp.mdt" },
++            { name = "cdspr.jsn" },
++            { name = "modem.mdt" },
++            { name = "modemr.jsn" },
++            { name = "modemuw.jsn" },
++            { name = "slpi.mdt" },
++            { name = "slpir.jsn" },
++            { name = "slpius.jsn" },
++            { name = "venus.mdt" },
++            { name = "wlanmdsp.mbn" },
++        ] },
++    { partition = "bluetooth_b", origin = "image", destination = "qca", files = [
 +            { name = "crbtfw21.tlv" },
 +            { name = "crnv21.bin" },
 +        ] },
@@ -234,6 +270,16 @@ index 0000000..4ab4d3e
 +# the size it was tuned for.
 +[output:DSI-1]
 +scale = 3
+diff --git a/devices/qcom/phosh-wip/etc/systemd/system/droid-juicer.service.d/10-slot.conf b/devices/qcom/phosh-wip/etc/systemd/system/droid-juicer.service.d/10-slot.conf
+new file mode 100644
+index 0000000..ca71c9d
+--- /dev/null
++++ b/devices/qcom/phosh-wip/etc/systemd/system/droid-juicer.service.d/10-slot.conf
+@@ -0,0 +1,4 @@
++[Service]
++# Extract firmware from the slot the phone booted, not always slot a
++ExecStart=
++ExecStart=/usr/libexec/guacamole/droid-juicer-slot
 diff --git a/devices/qcom/phosh-wip/etc/systemd/system/phosh.service.d/10-renderer.conf b/devices/qcom/phosh-wip/etc/systemd/system/phosh.service.d/10-renderer.conf
 new file mode 100644
 index 0000000..4dd2392
@@ -276,6 +322,23 @@ index 0000000..5faaa38
 +# runtime-suspend (GMU power collapse, 66 ms autosuspend) is suspected of
 +# resetting the SoC into Qualcomm crash-dump mode.
 +ACTION=="add|bind", SUBSYSTEM=="platform", KERNEL=="2c00000.gpu", ATTR{power/control}="on"
+diff --git a/devices/qcom/phosh-wip/usr/libexec/guacamole/droid-juicer-slot b/devices/qcom/phosh-wip/usr/libexec/guacamole/droid-juicer-slot
+new file mode 100755
+index 0000000..e52d837
+--- /dev/null
++++ b/devices/qcom/phosh-wip/usr/libexec/guacamole/droid-juicer-slot
+@@ -0,0 +1,11 @@
++#!/bin/sh
++# droid-juicer takes partitions without a slot suffix from slot a, and the
++# bootloader passes no androidboot.slot_suffix. Extract from the slot the
++# phone booted instead (qbootctl reads it from the GPT A/B attributes), so
++# the firmware matches that slot's bootloader and TrustZone.
++slot=$(qbootctl -c 2>/dev/null | sed -n 's/^Current slot: _\([ab]\)$/\1/p')
++if [ -z "$slot" ]; then
++	echo "droid-juicer-slot: can't detect the current slot, using slot a" >&2
++	slot=a
++fi
++exec /usr/bin/droid-juicer --device "oneplus,guacamole_$slot"
 diff --git a/devices/qcom/phosh-wip/usr/libexec/guacamole/phosh-renderer b/devices/qcom/phosh-wip/usr/libexec/guacamole/phosh-renderer
 new file mode 100755
 index 0000000..89c986e
