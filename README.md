@@ -168,6 +168,7 @@ hour (most of it is installing packages under arm64 emulation).
 | `0002` | guacamole device tree: `qcom,msm-id`/`board-id` so the bootloader accepts the DTB; disable `dispcc` (it reprograms the display PLL and freezes the bootloader framebuffer); framebuffer interconnect paths and physical size; enable QUP2 + GPI DMA and release the touchscreen reset GPIO; Wi-Fi supplies; PM8150B charger/fuel gauge + battery; Android 12 firmware carve-outs (160 MiB modem region) |
 | `0003` | simpledrm: keep the framebuffer's `interconnects` voted so scanout isn't starved |
 | `0004` | ath10k: skip the WMI quiet-mode command on WCN3990 (crashes WLAN.HL.3.x firmware) and force passive 5 GHz scans, after [this linux-wireless series](https://ratatoskr.run/linux-wireless/2026/03/15793732/t) |
+| `0005` | simpledrm: report a DSI connector when the framebuffer has a `panel` node, so phoc/phosh treat the display as the built-in panel (touch mapping, rounded-corner margins in the top bar) |
 
 `kernel/nethunter.config` switches the display to simpledrm, builds a plain
 `Image.gz` for the Android bootloader, and enables common USB Wi-Fi/serial
@@ -179,8 +180,11 @@ adapters. `kernel/pmos/` holds postmarketOS' kernel config and patches.
   command line `clk_ignore_unused pd_ignore_unused`).
 * droid-juicer config to extract firmware on first boot.
 * Enables USB networking; installs Settings, Files, Text Editor, Calculator.
-* Phosh tuning for the framebuffer: output scale 3, touch mapped to the panel,
-  pixman/cairo renderers, no animations, CPU `performance` governor.
+* Phosh tuning for the framebuffer: output scale 3, pixman/cairo renderers,
+  no animations, CPU `performance` governor.
+* Display panel description (rounded corners) for phosh, which has none for
+  guacamole, loaded through `G_RESOURCE_OVERLAYS` so the status bar icons
+  aren't cut off by the screen corners.
 * Fixes to the build scripts (`wip` variant, rootfs partition extraction).
 
 ## Known issues / TODO

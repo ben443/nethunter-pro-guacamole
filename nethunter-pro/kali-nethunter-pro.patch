@@ -177,7 +177,7 @@ index 0000000..988669d
 +GSK_RENDERER=cairo
 diff --git a/devices/qcom/phosh-wip/etc/phosh/phoc.ini b/devices/qcom/phosh-wip/etc/phosh/phoc.ini
 new file mode 100644
-index 0000000..4b2c6a4
+index 0000000..4ab4d3e
 --- /dev/null
 +++ b/devices/qcom/phosh-wip/etc/phosh/phoc.ini
 @@ -0,0 +1,32 @@
@@ -208,11 +208,11 @@ index 0000000..4b2c6a4
 +#rotate = 90
 +scale = 2
 +
-+# OnePlus 7 Pro (guacamole): simpledrm reports no physical size, so
-+# phoc cannot pick a scale on its own
-+[output:Unknown-1]
++# OnePlus 7 Pro (guacamole): bootloader framebuffer via simpledrm, which
++# reports a DSI connector (built-in panel). Pin the scale so the UI keeps
++# the size it was tuned for.
++[output:DSI-1]
 +scale = 3
-+fake-builtin = true
 diff --git a/devices/qcom/phosh-wip/etc/systemd/system/cpu-performance.service b/devices/qcom/phosh-wip/etc/systemd/system/cpu-performance.service
 new file mode 100644
 index 0000000..d9d641e
@@ -246,6 +246,17 @@ index 0000000..911b11c
 +[Service]
 +# No GPU driver yet: composite with pixman instead of GLES on llvmpipe
 +Environment=WLR_RENDERER=pixman
+diff --git a/devices/qcom/phosh-wip/etc/systemd/system/phosh.service.d/20-panel.conf b/devices/qcom/phosh-wip/etc/systemd/system/phosh.service.d/20-panel.conf
+new file mode 100644
+index 0000000..0b41669
+--- /dev/null
++++ b/devices/qcom/phosh-wip/etc/systemd/system/phosh.service.d/20-panel.conf
+@@ -0,0 +1,5 @@
++[Service]
++# gmobile has no display panel data for guacamole (compiled-in resources
++# only), so phosh doesn't know about the rounded corners and puts the status
++# icons under them. Overlay our panel description onto gmobile's resource path.
++Environment=G_RESOURCE_OVERLAYS=/mobi/phosh/gmobile/devices/display-panels/oneplus,guacamole.json=/usr/share/gmobile-guacamole/oneplus,guacamole.json
 diff --git a/devices/qcom/phosh-wip/usr/share/glib-2.0/schemas/90_guacamole.gschema.override b/devices/qcom/phosh-wip/usr/share/glib-2.0/schemas/90_guacamole.gschema.override
 new file mode 100644
 index 0000000..b697958
@@ -255,3 +266,17 @@ index 0000000..b697958
 +# Software rendering only (no GPU driver yet): skip animations
 +[org.gnome.desktop.interface]
 +enable-animations=false
+diff --git a/devices/qcom/phosh-wip/usr/share/gmobile-guacamole/oneplus,guacamole.json b/devices/qcom/phosh-wip/usr/share/gmobile-guacamole/oneplus,guacamole.json
+new file mode 100644
+index 0000000..2f36818
+--- /dev/null
++++ b/devices/qcom/phosh-wip/usr/share/gmobile-guacamole/oneplus,guacamole.json
+@@ -0,0 +1,8 @@
++{
++  "name": "OnePlus 7 Pro",
++  "x-res": 1440,
++  "y-res": 3120,
++  "border-radius": 150,
++  "width": 71,
++  "height": 154
++}
