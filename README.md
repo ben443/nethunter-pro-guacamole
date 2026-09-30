@@ -34,10 +34,15 @@ phoc packages are cross-built in containers.
 ```
 
 The script checks out both pinned source revisions, builds an arm64 kernel
-package with the `kernel/nethunter.config` fragment, applies the local r8q
-simpledrm DTS patch, builds the patched phoc package, and runs the NetHunter Pro
-recipe with `-t r8q -e phosh`. Build artifacts are written into the
-`kali-nethunter-pro` checkout under this repository.
+package using the upstream SM8250 config and the local `kernel/nethunter.config`
+fragment, applies the local r8q simpledrm DTS patch, builds the patched phoc
+package, and runs the NetHunter Pro recipe with `-t r8q -e phosh`. The local
+kernel fragment enables USB gadget HID, RNDIS, serial, and mass-storage functions
+alongside the r8q display, storage, and Wi-Fi settings. Build artifacts are
+written into the `kali-nethunter-pro` checkout under this repository.
+
+GitHub Actions builds the image on pushes, pull requests, and manual dispatches.
+The completed image artifacts are available from the workflow run.
 
 The kernel source currently builds at the commit recorded in
 `kernel/UPSTREAM_COMMIT` (Linux 7.1.5). To update either source revision, update

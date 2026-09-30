@@ -1,0 +1,65 @@
+name: Build NetHunter Pro r8q
+
+on:
+  push:
+    paths:
+      - ".github/workflows/build-r8q.yml"
+      - "README.md"
+      - "build.sh"
+      - "kernel/**"
+      - "nethunter-pro/**"
+      - "phoc/**"
+  pull_request:
+    paths:
+      - ".github/workflows/build-r8q.yml"
+      - "README.md"
+      - "build.sh"
+      - "kernel/**"
+      - "nethunter-pro/**"
+      - "phoc/**"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 240
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Install build dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            android-sdk-libsparse-utils \
+            bmap-tools \
+            cryptsetup \
+            curl \
+            debos \
+            f2fs-tools \
+            git \
+            mkbootimg \
+            podman \
+            squashfs-tools-ng \
+            xz-utils \
+            yq
+
+      - name: Build r8q image
+        run: sudo env CONTAINER=podman ./build.sh
+
+      - name: Upload image artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: nethunterpro-r8q-phosh-${{ github.run_number }}
+          if-no-files-found: error
+          path: |
+            kali-nethunter-pro/nethunterpro-*.img
+            kali-nethunter-pro/nethunterpro-*.img.xz
+            kali-nethunter-pro/nethunterpro-*.img.bmap
+            kali-nethunter-pro/nethunterpro-*.tar.xz
+            kali-nethunter-pro/nethunterpro-*.sha256sums
+          retention-days: 14
