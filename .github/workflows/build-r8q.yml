@@ -38,6 +38,7 @@ jobs:
             android-sdk-libsparse-utils \
             bmap-tools \
             cryptsetup \
+            curl \
             debos \
             f2fs-tools \
             git \
