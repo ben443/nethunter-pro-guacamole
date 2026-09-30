@@ -1,5 +1,4 @@
-kernel/linux-v6.17.0-sm8150/
-kernel/linux-v6.17.0-sm8150.tar.gz
+kernel/linux-mainline-nethunter-pro/
 kernel/out/
 kali-nethunter-pro/
 *.img

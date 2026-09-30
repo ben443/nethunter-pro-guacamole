@@ -20,15 +20,24 @@ git -C "$HERE/$SRC" fetch --depth=1 origin "$COMMIT"
 git -C "$HERE/$SRC" checkout --detach "$COMMIT"
 [ "$(git -C "$HERE/$SRC" rev-parse HEAD)" = "$COMMIT" ]
 
+for p in "$HERE"/patches/*.patch; do
+	if ! git -C "$HERE/$SRC" apply --reverse --check "$p" >/dev/null 2>&1; then
+		git -C "$HERE/$SRC" apply "$p"
+	fi
+done
+
 if ! $ENGINE image exists "$IMAGE" 2>/dev/null &&
    ! $ENGINE image inspect "$IMAGE" >/dev/null 2>&1; then
 	$ENGINE build -t "$IMAGE" -f - "$HERE" <<'EOF'
 FROM docker.io/kalilinux/kali-rolling
 RUN apt-get update && apt-get install -y --no-install-recommends \
-	bc bison build-essential clang cpio debhelper dpkg-dev flex kmod \
+	bc bison build-essential clang cpio debhelper dpkg-dev flex git kmod \
 	libelf-dev libssl-dev lld llvm python3 rsync
 EOF
 fi
+
+mkdir -p "$HERE/out"
+rm -f "$HERE"/out/linux-image-*_arm64.deb
 
 $ENGINE run --rm -v "$HERE:/work:z" -w "/work/$SRC" "$IMAGE" sh -ec '
 	export ARCH=arm64 LLVM=1
