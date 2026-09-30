@@ -42,7 +42,8 @@ rm -f "$HERE"/out/linux-image-*_arm64.deb
 $ENGINE run --rm -v "$HERE:/work:z" -w "/work/$SRC" "$IMAGE" sh -ec '
 	export ARCH=arm64 LLVM=1
 	make defconfig
-	scripts/kconfig/merge_config.sh -m .config ../nethunter.config
+	scripts/kconfig/merge_config.sh -m .config \
+		arch/arm64/configs/sm8250.config ../nethunter.config
 	make olddefconfig
 	# No linux-headers package: it needs a gcc cross toolchain (we use LLVM).
 	# -d: skip dpkg build-dep check (libdw-dev etc. are not needed here)
