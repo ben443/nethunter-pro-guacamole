@@ -7,7 +7,7 @@ set -e
 
 HERE="$(cd "$(dirname "$0")" && pwd)"
 VERSION=0.57.0-1
-LOCAL_VERSION="$VERSION+guacamole1"
+LOCAL_VERSION="$VERSION+r8q1"
 POOL=http://http.kali.org/kali/pool/main/p/phoc
 IMAGE=kali-phoc-cross-builder
 ENGINE="${CONTAINER:-$(command -v podman >/dev/null 2>&1 && echo podman || echo docker)}"
@@ -43,8 +43,8 @@ fi
 		cp \"\$p\" debian/patches/
 		basename \"\$p\" >> debian/patches/series
 	done
-	DEBEMAIL=nobody@localhost DEBFULLNAME='nethunter-pro-guacamole' \
-		dch -v $LOCAL_VERSION 'Patches for the OnePlus 7 Pro (guacamole) port.'
+	DEBEMAIL=nobody@localhost DEBFULLNAME='nethunter-pro-r8q' \
+		dch -v $LOCAL_VERSION 'Patches for the Samsung Galaxy S20 FE 5G (r8q) port.'
 	apt-get build-dep -y -q -a arm64 ./
 	DEB_BUILD_OPTIONS=nocheck DEB_BUILD_PROFILES='cross nocheck' \
 		dpkg-buildpackage -a arm64 -b -uc -us
